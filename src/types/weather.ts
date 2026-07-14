@@ -72,14 +72,7 @@ export interface WeatherApiErrorResponse {
   details?: unknown;
 }
 
-export type WeatherMetricId =
-  | "humidity"
-  | "wind"
-  | "pressure"
-  | "visibility"
-  | "uv"
-  | "sunrise"
-  | "sunset";
+export type WeatherMetricId = "wind" | "sunrise" | "sunset";
 
 export type WeatherMetricItem = {
   id: WeatherMetricId;

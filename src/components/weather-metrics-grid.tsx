@@ -1,15 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  Droplets,
-  Eye,
-  Gauge,
-  Sunrise,
-  Sunset,
-  SunMedium,
-  Wind,
-} from "lucide-react";
+import { Sunrise, Sunset, Wind } from "lucide-react";
 
 import { WeatherMetricCard } from "@/components/weather-metric-card";
 import { buildWeatherMetrics } from "@/lib/weather-metrics";
@@ -17,11 +9,7 @@ import { cn } from "@/lib/utils";
 import type { WeatherMetricId, WeatherResponse } from "@/types/weather";
 
 const METRIC_ICONS: Record<WeatherMetricId, ReactNode> = {
-  humidity: <Droplets aria-hidden />,
   wind: <Wind aria-hidden />,
-  pressure: <Gauge aria-hidden />,
-  visibility: <Eye aria-hidden />,
-  uv: <SunMedium aria-hidden />,
   sunrise: <Sunrise aria-hidden />,
   sunset: <Sunset aria-hidden />,
 };
@@ -41,7 +29,7 @@ export function WeatherMetricsGrid({
     <section
       aria-label="Weather metrics"
       className={cn(
-        "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4",
+        "grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4",
         className
       )}
     >
@@ -54,11 +42,6 @@ export function WeatherMetricsGrid({
           value={metric.value}
           unit={metric.unit}
           subtitle={metric.subtitle}
-          className={
-            metric.id === "sunset" || metric.id === "sunrise"
-              ? "col-span-1"
-              : undefined
-          }
         />
       ))}
     </section>

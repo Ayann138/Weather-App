@@ -1,9 +1,11 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { AiSummaryCard } from "@/components/ai-summary-card";
+import { WeatherChartsSection } from "@/components/charts/weather-charts-section";
 import { HeroWeatherCard } from "@/components/hero-weather-card";
+import { MissionControlInsights } from "@/components/mission-control-insights";
 import { WeatherMetricsGrid } from "@/components/weather-metrics-grid";
 import {
   Card,
@@ -20,6 +22,7 @@ import {
   getWeatherLabel,
 } from "@/lib/weather-format";
 import { getWeatherIcon } from "@/lib/weather-icons";
+import { analyzeWeather } from "@/services/weather-intelligence";
 import type { SelectedLocation } from "@/types/location";
 import type { WeatherResponse } from "@/types/weather";
 
@@ -32,6 +35,7 @@ export function WeatherResults({ location, weather }: WeatherResultsProps) {
   const { current, daily, hourly, units, ai_summary } = weather;
   const nextHours = hourly.slice(0, 12);
   const today = daily[0];
+  const intelligence = analyzeWeather(weather);
 
   return (
     <motion.div
@@ -47,7 +51,20 @@ export function WeatherResults({ location, weather }: WeatherResultsProps) {
         units={units}
       />
 
+      <AiSummaryCard
+        summary={ai_summary}
+        generatedAt={current.time}
+        locationName={location.name}
+      />
+
+      <MissionControlInsights
+        weather={weather}
+        intelligence={intelligence}
+      />
+
       <WeatherMetricsGrid weather={weather} />
+
+      <WeatherChartsSection weather={weather} />
 
       <Card className="border-transparent bg-card/90 shadow-sm ring-1 ring-foreground/8 dark:bg-card/70 dark:ring-white/10">
         <CardHeader>
@@ -121,23 +138,6 @@ export function WeatherResults({ location, weather }: WeatherResultsProps) {
           </ul>
         </CardContent>
       </Card>
-
-      {ai_summary ? (
-        <Card className="border-transparent bg-card/90 shadow-sm ring-1 ring-foreground/8 dark:bg-card/70 dark:ring-white/10">
-          <CardHeader>
-            <div className="mb-1 flex size-10 items-center justify-center rounded-xl bg-muted dark:bg-muted/80">
-              <Sparkles className="size-5" aria-hidden />
-            </div>
-            <CardTitle>AI summary</CardTitle>
-            <CardDescription>Generated briefing for this location</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-              {ai_summary}
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
     </motion.div>
   );
 }

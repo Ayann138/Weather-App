@@ -39,7 +39,7 @@ export function useWeather({
 }: UseWeatherParams): UseWeatherResult {
   const query = useQuery<WeatherResponse, WeatherApiError>({
     queryKey: queryKeys.weather.detail(latitude, longitude, days),
-    queryFn: () => getWeather({ latitude, longitude, days }),
+    queryFn: () => getWeather({ latitude, longitude, days, ai: true }),
     staleTime: STALE_TIME_MS,
     gcTime: GC_TIME_MS,
     retry: 2,

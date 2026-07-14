@@ -7,21 +7,8 @@ import type {
 
 const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
 
-function getOptionalNumber(...values: Array<number | undefined>): number | null {
-  for (const value of values) {
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return value;
-    }
-  }
-  return null;
-}
-
 function getWindUnit(units: WeatherUnits): string {
   return units === "imperial" ? "mph" : "km/h";
-}
-
-function getVisibilityUnit(units: WeatherUnits): string {
-  return units === "imperial" ? "mi" : "km";
 }
 
 function getCompassLabel(degrees: number): string {
@@ -29,14 +16,11 @@ function getCompassLabel(degrees: number): string {
   return COMPASS[index];
 }
 
-function getHumiditySubtitle(humidity: number): string {
-  if (humidity < 30) return "Dry air";
-  if (humidity < 60) return "Comfortable";
-  if (humidity < 80) return "Humid";
-  return "Very humid";
-}
-
-function getWindSubtitle(speed: number, direction: number, units: WeatherUnits): string {
+function getWindSubtitle(
+  speed: number,
+  direction: number,
+  units: WeatherUnits
+): string {
   const compass = getCompassLabel(direction);
   const calmThreshold = units === "imperial" ? 3 : 5;
 
@@ -55,27 +39,6 @@ function getWindSubtitle(speed: number, direction: number, units: WeatherUnits):
   return `Strong · ${compass}`;
 }
 
-function getPressureSubtitle(pressure: number): string {
-  if (pressure < 1000) return "Low pressure";
-  if (pressure < 1020) return "Steady";
-  return "High pressure";
-}
-
-function getVisibilitySubtitle(visibilityKm: number): string {
-  if (visibilityKm < 1) return "Very poor";
-  if (visibilityKm < 4) return "Hazy";
-  if (visibilityKm < 10) return "Clear enough";
-  return "Excellent";
-}
-
-function getUvSubtitle(uv: number): string {
-  if (uv < 3) return "Low";
-  if (uv < 6) return "Moderate";
-  if (uv < 8) return "High";
-  if (uv < 11) return "Very high";
-  return "Extreme";
-}
-
 function parseApiTime(value: string | undefined, fallback: Date): Date {
   if (!value) {
     return fallback;
@@ -85,13 +48,9 @@ function parseApiTime(value: string | undefined, fallback: Date): Date {
   return Number.isNaN(parsed.getTime()) ? fallback : parsed;
 }
 
-function formatMetricValue(value: number, digits = 0): string {
-  return value.toFixed(digits);
-}
-
 /**
- * Builds the metrics grid model from a Weather AI response.
- * Uses optional API fields when present; derives sunrise/sunset from coordinates otherwise.
+ * Builds metrics from fields the Weather AI API actually returns,
+ * plus sunrise/sunset (API or estimated from coordinates).
  */
 export function buildWeatherMetrics(
   weather: WeatherResponse
@@ -99,67 +58,31 @@ export function buildWeatherMetrics(
   const { current, daily, units, lat, lon } = weather;
   const today = daily[0];
 
-  const humidity = getOptionalNumber(current.humidity, today?.humidity);
-  const pressure = getOptionalNumber(current.pressure, today?.pressure);
-  const visibility = getOptionalNumber(current.visibility, today?.visibility);
-  const uvIndex = getOptionalNumber(current.uv_index, today?.uv_index);
-
   const referenceDate = current.time.includes("T")
     ? new Date(current.time)
     : new Date(`${today?.date ?? current.time}T12:00:00`);
 
   const computedSun = getSunTimes(lat, lon, referenceDate);
-  const sunrise = parseApiTime(current.sunrise ?? today?.sunrise, computedSun.sunrise);
-  const sunset = parseApiTime(current.sunset ?? today?.sunset, computedSun.sunset);
-
-  const visibilityDisplay =
-    visibility === null
-      ? null
-      : units === "imperial"
-        ? visibility * 0.621371
-        : visibility;
+  const sunrise = parseApiTime(
+    current.sunrise ?? today?.sunrise,
+    computedSun.sunrise
+  );
+  const sunset = parseApiTime(
+    current.sunset ?? today?.sunset,
+    computedSun.sunset
+  );
 
   return [
     {
-      id: "humidity",
-      label: "Humidity",
-      value: humidity === null ? "—" : formatMetricValue(humidity),
-      unit: "%",
-      subtitle: humidity === null ? "Not available" : getHumiditySubtitle(humidity),
-    },
-    {
       id: "wind",
       label: "Wind Speed",
-      value: formatMetricValue(current.windspeed),
+      value: current.windspeed.toFixed(0),
       unit: getWindUnit(units),
-      subtitle: getWindSubtitle(current.windspeed, current.winddirection, units),
-    },
-    {
-      id: "pressure",
-      label: "Pressure",
-      value: pressure === null ? "—" : formatMetricValue(pressure),
-      unit: "hPa",
-      subtitle: pressure === null ? "Not available" : getPressureSubtitle(pressure),
-    },
-    {
-      id: "visibility",
-      label: "Visibility",
-      value:
-        visibilityDisplay === null
-          ? "—"
-          : formatMetricValue(visibilityDisplay, visibilityDisplay < 10 ? 1 : 0),
-      unit: getVisibilityUnit(units),
-      subtitle:
-        visibility === null
-          ? "Not available"
-          : getVisibilitySubtitle(visibility),
-    },
-    {
-      id: "uv",
-      label: "UV Index",
-      value: uvIndex === null ? "—" : formatMetricValue(uvIndex, uvIndex % 1 === 0 ? 0 : 1),
-      unit: "",
-      subtitle: uvIndex === null ? "Not available" : getUvSubtitle(uvIndex),
+      subtitle: getWindSubtitle(
+        current.windspeed,
+        current.winddirection,
+        units
+      ),
     },
     {
       id: "sunrise",
